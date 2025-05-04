@@ -1,0 +1,148 @@
+/* AuthStyles.css */
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fff;
+}
+
+.auth-header {
+  background: rgb(94, 88, 213);
+  padding: 1rem 2rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+  text-decoration: none;
+}
+
+.auth-content {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.auth-content h1 {
+  color: #2c3e50;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.auth-form {
+  background: #f8f9fa;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #666;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.auth-button {
+  width: 100%;
+  padding: 1rem;
+  background: rgb(94, 88, 213);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.auth-button:hover {
+  background: rgb(94, 88, 213);
+}
+
+.auth-switch {
+  margin-top: 1.5rem;
+  color: #666;
+}
+
+.auth-switch a {
+  color: rgb(94, 88, 213);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.forgot-password{
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+  color: rgb(94, 88, 213);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .auth-content {
+    padding: 0 1rem;
+  }
+  
+  .auth-form {
+    padding: 1.5rem;
+  }
+}
+
+.error-message {
+  color: #dc3545;
+  background: #f8d7da;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 0 auto 20px;
+  max-width: 400px;
+  border: 1px solid #f5c6cb;
+  text-align: center;
+}
+
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.75s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.auth-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.forgot-password-container {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.forgot-password {
+  color: rgb(94, 88, 213);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
