@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WorkoutPlan from '../components/WorkoutPlan';
 import DietPlan from '../components/DietPlan';
-import axios from 'axios';
-const apiKeyy = import.meta.env.REACT_APP_GOOGLE_GENAI_API_KEY;
+import ProfileSettings from '../components/ProfileSettings';
+import ProgressCharts from '../components/ProgressCharts';
+import Footer from '../components/Footer';
+import api from '../utils/axiosConfig';
+import FloatingChat from '../components/AiChat';
 
 import { 
   CircularProgress, 
@@ -18,12 +21,6 @@ import {
 
 import { GoogleGenAI } from "@google/genai";
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-//const ai = new GoogleGenAI({ apiKey: apiKeyy });
-
-const api = axios.create({
-  baseURL: 'http://localhost:3000',
-  withCredentials: true
-});
 
 const theme = createTheme({
   palette: {
@@ -36,29 +33,17 @@ const theme = createTheme({
 const UserDashboard = () => {
   const workoutPlanRef = useRef(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [recentLogs, setRecentLogs] = useState([]);
   const [dailyTip, setDailyTip] = useState('Loading your daily tip...');
   const [dailyChallenge, setDailyChallenge] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [tipLoading, setTipLoading] = useState(true);
   const navigate = useNavigate();
-
-  const [userData, setUserData] = useState({
-    name: "User",
-    stats: {
-      exercises_completed: 0
-    },
-    goals: {
-      exercises: 5
-    }
-  });
 
   const [userProfile, setUserProfile] = useState({
     creation_time: null,
     fname: '',
     lname: '',
+    birth_date: null,
     height: 0,
     weight: 0,
     gender: '',
@@ -76,18 +61,15 @@ const UserDashboard = () => {
 
   const handleWorkoutStatsChange = (stats) => {
     console.log('Received workout stats in UserDashboard:', stats);
-    if (stats.total > 0) { // Only update if there are exercises
-      setTodayStats(prevStats => ({
-        ...prevStats,
-        exercises_completed: stats.completed,
-        total_exercises: stats.total
-      }));
-    }
+    setTodayStats(prev => ({
+      ...prev,
+      exercises_completed: stats.completed,
+      total_exercises: stats.total
+    }));
   };
 
   useEffect(() => {
     const fetchAllData = async () => {
-      setLoading(true);
       try {
         await Promise.all([
           fetchRecentLogs(),
@@ -96,10 +78,7 @@ const UserDashboard = () => {
           fetchUserData()
         ]);
       } catch (err) {
-        setError('Failed to load dashboard data');
         console.error('Dashboard loading error:', err);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -108,10 +87,10 @@ const UserDashboard = () => {
 
   const fetchRecentLogs = async () => {
     try {
-      const response = await api.get('/api/user/exercise-logs/recent');
+      const response = await api.get('/api/user/exercise-logs/today'); // Changed from /recent to /today
       setRecentLogs(response.data);
     } catch (error) {
-      console.error('Error fetching recent logs:', error);
+      console.error('Error fetching today\'s logs:', error);
     }
   };
 
@@ -135,23 +114,24 @@ const UserDashboard = () => {
   const fetchDailyChallenge = async () => {
     try {
       const response = await api.get('/gemini/daily-challenge');
-      // Ensure proper data structure and parsing
+      console.log('Raw challenge response:', response.data); // Debug log
+      
+      // Map the exercises with correct field names
       const exercises = response.data.exercises.map(exercise => ({
         name: exercise.name,
-        // Convert string values to numbers and ensure either reps or duration exists
-        reps: exercise.reps ? parseInt(exercise.reps) : undefined,
-        duration: exercise.duration ? parseInt(exercise.duration) : undefined
+        reps: exercise.reps,
+        duration_seconds: exercise.duration_seconds // Change duration to duration_seconds
       }));
       
+      console.log('Processed exercises:', exercises); // Debug log
       setDailyChallenge({ exercises });
     } catch (error) {
       console.error('Error fetching daily challenge:', error);
-      // Fallback content with consistent format
       setDailyChallenge({
         exercises: [
-          { name: "Jumping Jacks", duration: 30 },
+          { name: "Jumping Jacks", duration_seconds: 30 },
           { name: "Push-ups", reps: 10 },
-          { name: "Mountain Climbers", duration: 30 },
+          { name: "Mountain Climbers", duration_seconds: 30 },
           { name: "Squats", reps: 15 }
         ]
       });
@@ -161,57 +141,70 @@ const UserDashboard = () => {
   const fetchUserData = async () => {
     try {
       const response = await api.get('/api/user/profile');
-      const todayStats = await api.get('/api/user/today-stats');
+      const todayStatsResponse = await api.get('/api/user/today-stats');
       
       // Store complete user profile
       setUserProfile(response.data.profile);
       
-      // Update existing userData state
-      setUserData({
-        name: `${response.data.profile.fname} ${response.data.profile.lname}`,
-        stats: {
-          exercises_completed: todayStats.data.exercises_completed || 0
-        },
-        goals: {
-          exercises: todayStats.data.total_exercises || 5
-        }
-      });
+      // Update todayStats with backend data
+      setTodayStats(todayStatsResponse.data);
 
-      setRecentLogs(todayStats.data.recent_logs || []);
     } catch (error) {
       console.error('Error fetching user data:', error);
-      setError('Failed to load user profile');
     }
   };
 
-  const calculateProgress = (current, goal) => {
-    return Math.min(Math.round((current / goal) * 100), 100);
-  };
+  // Add motivational messages array
+  const motivationalMessages = [
+    "Keep pushing your limits! 💪",
+    "You're crushing it today! 🔥",
+    "Every rep counts! 🏋️‍♂️",
+    "Stay strong, stay focused! 💯",
+    "You're making progress! 🌟",
+    "Your future self thanks you! 🙌",
+    "One step closer to your goals! 🎯",
+    "You've got this! 💪",
+    "Making gains, one exercise at a time! 💪",
+    "Your dedication is inspiring! 🌟"
+  ];
 
   const renderStatsCard = () => {
-    const progress = Math.min(
-      ((todayStats.exercises_completed || 0) / (userData.goals.exercises || 1)) * 100, 
-      100
-    );
-
+    const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+    
     return (
-      <div style={styles.statsGrid}>
-        <div style={styles.statsCard}>
-          <h3 style={styles.statsTitle}>Exercises Completed Today</h3>
-          <div style={styles.statsNumbers}>
-            <span style={styles.currentStat}>{todayStats.exercises_completed || 0}</span>
-            <span style={styles.goalStat}> / {userData.goals.exercises || 0}</span>
-          </div>
-          <div style={styles.progressBar}>
-            <div 
-              style={{
-                ...styles.progressFill,
-                width: `${progress}%`
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 2, mb: 4 }}>
+        <Box sx={styles.statsCard}>
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <FitnessCenterIcon sx={{ mr: 1, color: '#5E58D5', fontSize: 28 }} />
+              <Typography variant="h6">Today's Progress</Typography>
+            </Box>
+            
+            <Typography 
+              variant="h2" 
+              sx={{ 
+                color: '#5E58D5',
+                fontWeight: 'bold',
+                my: 3,
+                fontSize: '4rem'
               }}
-            />
-          </div>
-        </div>
-      </div>
+            >
+              {todayStats.exercises_completed}
+            </Typography>
+
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: '#666',
+                fontStyle: 'italic',
+                mt: 1
+              }}
+            >
+              {randomMessage}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
     );
   };
 
@@ -220,22 +213,32 @@ const UserDashboard = () => {
       <Typography variant="h6" gutterBottom>📝 Today's Activity</Typography>
       {recentLogs.length > 0 ? (
         recentLogs.map((log) => (
-          // Use unique combination of exercise_id and log_date as key
           <Box 
             key={`${log.exercise_id}-${new Date(log.log_date).getTime()}`} 
             sx={styles.logItem}
           >
             <Box>
-              <Typography sx={styles.logExercise}>{log.exercise_name}</Typography>
+              <Typography sx={styles.logExercise}>
+                {log.exercise_name}
+              </Typography>
               <Typography sx={styles.logDetails}>
                 {log.sets} sets × {log.reps} reps
               </Typography>
             </Box>
-            <Typography sx={styles.logWeight}>{log.weight}kg</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {log.weight > 0 && (
+                <Typography sx={styles.logWeight}>{log.weight}kg</Typography>
+              )}
+              <Typography sx={{ color: 'success.main', fontSize: '0.875rem' }}>
+                ✓ Completed
+              </Typography>
+            </Box>
           </Box>
         ))
       ) : (
-        <Typography color="textSecondary">No exercises completed today</Typography>
+        <Typography color="textSecondary">
+          No exercises completed today
+        </Typography>
       )}
     </Box>
   );
@@ -243,15 +246,21 @@ const UserDashboard = () => {
   const renderContent = () => {
     return (
       <Box>
-        {/* Hidden WorkoutPlan to load initial stats */}
-        <Box sx={{ display: 'none' }}>
-          <WorkoutPlan ref={workoutPlanRef} onStatsChange={handleWorkoutStatsChange} />
-        </Box>
-
-        {activeTab === 'workout-plan' ? (
-          <WorkoutPlan onStatsChange={handleWorkoutStatsChange} />
+        {activeTab === 'profile' ? (
+          <ProfileSettings 
+            userProfile={userProfile} 
+            onProfileUpdate={(updatedProfile) => setUserProfile(updatedProfile)}
+          />
+        ) : activeTab === 'workout-plan' ? (
+          <WorkoutPlan 
+            onStatsChange={handleWorkoutStatsChange} 
+            userProfile={userProfile}
+            ref={workoutPlanRef} 
+          />
+        ) : activeTab === 'progress-stats' ? (
+          <ProgressCharts />
         ) : activeTab === 'diet-plan' ? (
-          <DietPlan />
+          <DietPlan userProfile={userProfile} />
         ) : (
           <Box>
             <Box sx={{ mb: 4 }}>
@@ -260,33 +269,7 @@ const UserDashboard = () => {
               </Typography>
             </Box>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 2, mb: 4 }}>
-              <Box sx={styles.statsCard}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <FitnessCenterIcon sx={{ mr: 1, color: '#5E58D5' }} />
-                  <Typography variant="h6">Today's Progress</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'baseline', mb: 2 }}>
-                  <Typography variant="h4" sx={{ mr: 1, color: '#333' }}>
-                    {todayStats.exercises_completed}
-                  </Typography>
-                  <Typography variant="h6" color="textSecondary">
-                    / {todayStats.total_exercises}
-                  </Typography>
-                </Box>
-                <Box sx={styles.progressBar}>
-                  <Box sx={{
-                    ...styles.progressFill,
-                    width: `${(todayStats.exercises_completed / (todayStats.total_exercises || 1)) * 100}%`,
-                    bgcolor: '#5E58D5',
-                    transition: 'width 0.3s ease-in-out'
-                  }} />
-                </Box>
-                <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-                  {todayStats.total_exercises - todayStats.exercises_completed} exercises remaining
-                </Typography>
-              </Box>
-            </Box>
+            {renderStatsCard()}
 
             {/* Recent Activity */}
             {renderRecentActivity()}
@@ -312,31 +295,25 @@ const UserDashboard = () => {
                 <Box>
                   <Typography sx={{ mb: 2 }}>10-minute HIIT Workout:</Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {dailyChallenge.exercises?.map((exercise, index) => {
-                      // Parse both values to ensure they're numbers
-                      const reps = parseInt(exercise.reps);
-                      const duration = parseInt(exercise.duration);
-                      
-                      return (
-                        <Box 
-                          key={index}
-                          sx={{
-                            p: 2,
-                            bgcolor: '#f8f8f8',
-                            borderRadius: 1,
-                            display: 'flex',
-                            justifyContent: 'space-between'
-                          }}
-                        >
-                          <Typography>{exercise.name}</Typography>
-                          <Typography color="textSecondary">
-                            {!isNaN(duration) ? `${duration} seconds` : 
-                             !isNaN(reps) ? `${reps} reps` : 
-                             '15 reps' /* fallback */}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
+                    {dailyChallenge.exercises?.map((exercise, index) => (
+                      <Box 
+                        key={index}
+                        sx={{
+                          p: 2,
+                          bgcolor: '#f8f8f8',
+                          borderRadius: 1,
+                          display: 'flex',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <Typography>{exercise.name}</Typography>
+                        <Typography color="textSecondary">
+                          {exercise.duration_seconds ? `${exercise.duration_seconds} seconds` : 
+                           exercise.reps ? `${exercise.reps} reps` : 
+                           '15 reps' /* fallback */}
+                        </Typography>
+                      </Box>
+                    ))}
                   </Box>
                   <Typography sx={{ mt: 2, color: 'text.secondary' }}>
                     Perform each exercise with maximum effort, rest 30 seconds between exercises
@@ -354,13 +331,68 @@ const UserDashboard = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={styles.container}>
+      <Box sx={{ 
+        ...styles.container,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh'
+      }}>
         <Box sx={styles.header}>
-          <Box sx={styles.headerContent}>
-            <Typography variant="h4" sx={styles.logo}>
-              FitTrack
-            </Typography>
-            <Box sx={styles.nav}>
+          <Box sx={{
+            ...styles.headerContent,
+            flexDirection: 'column',
+            gap: 2,
+            py: 2
+          }}>
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+              px: 2
+            }}>
+              <Box sx={{ width: 100 }} /> {/* Spacer for balance */}
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  ...styles.logo,
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  '&:hover': {
+                    opacity: 0.8
+                  }
+                }}
+                onClick={() => navigate('/')}
+              >
+                FitTrack
+              </Typography>
+              <Button
+                sx={{
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                  width: 100
+                }}
+                onClick={async () => {
+                  try {
+                    await api.get('/api/auth/logout');
+                    localStorage.removeItem('token');
+                    navigate('/');
+                  } catch (error) {
+                    console.error('Logout error:', error);
+                  }
+                }}
+              >
+                Logout
+              </Button>
+            </Box>
+
+            <Box sx={{
+              ...styles.nav,
+              width: '100%',
+              justifyContent: 'center'
+            }}>
               <Button 
                 sx={activeTab === 'dashboard' ? styles.activeNavButton : styles.navButton}
                 onClick={() => setActiveTab('dashboard')}
@@ -374,23 +406,33 @@ const UserDashboard = () => {
                 Workout Plan
               </Button>
               <Button 
+                sx={activeTab === 'progress-stats' ? styles.activeNavButton : styles.navButton}
+                onClick={() => setActiveTab('progress-stats')}
+              >
+                Progress Stats
+              </Button>
+              <Button 
                 sx={activeTab === 'diet-plan' ? styles.activeNavButton : styles.navButton}
                 onClick={() => setActiveTab('diet-plan')}
               >
                 Diet Plan
               </Button>
-            </Box>
-            <Box sx={styles.profile}>
-              <Typography>
-                Hi, {userProfile.fname || 'User'} {/* Use first name only in header */}
-              </Typography>
+              <Button 
+                sx={activeTab === 'profile' ? styles.activeNavButton : styles.navButton}
+                onClick={() => setActiveTab('profile')}
+              >
+                Profile Settings
+              </Button>
             </Box>
           </Box>
         </Box>
 
-        <Container sx={styles.main}>
+        <Container sx={{ ...styles.main, flex: 1 }}>
           {renderContent()}
         </Container>
+
+        <Footer />
+        <FloatingChat />
       </Box>
     </ThemeProvider>
   );
@@ -408,8 +450,6 @@ const styles = {
   },
   headerContent: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     maxWidth: '1200px',
     mx: 'auto',
   },
@@ -420,7 +460,6 @@ const styles = {
     display: 'flex',
     gap: 2,
     flexWrap: 'wrap',
-    justifyContent: 'center',
   },
   navButton: {
     color: 'white',
@@ -461,6 +500,11 @@ const styles = {
     borderRadius: 1,
     boxShadow: 1,
     p: 3,
+    transition: 'transform 0.2s ease',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: 2,
+    },
   },
   card: {
     bgcolor: 'white',

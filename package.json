@@ -12,14 +12,17 @@
     "start": "nodemon backend/main.js"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.804.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@google/genai": "^0.12.0",
     "@google/generative-ai": "^0.24.1",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
+    "aws-sdk": "^2.1692.0",
     "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
+    "chart.js": "^4.4.9",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -30,6 +33,7 @@
     "mysql2": "^3.14.0",
     "nodemon": "^3.1.9",
     "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0",
     "trying-router": "file:"

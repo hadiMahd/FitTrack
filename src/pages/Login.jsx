@@ -3,8 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styling/Auth.css';
 
-
-
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -100,6 +98,15 @@ const Login = () => {
     }
   };
 
+  // Update the forgot password link styling
+  const forgotPasswordStyles = {
+    color: '#5E58D5',
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline'
+    }
+  };
+
   return (
     <div className="auth-container">
       <header className="auth-header">
@@ -161,6 +168,7 @@ const Login = () => {
               to="/forgot-password" 
               className="forgot-password"
               aria-label="Reset password"
+              style={forgotPasswordStyles}
             >
               Forgot password?
             </Link>

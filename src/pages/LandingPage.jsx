@@ -1,9 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styling/landing_page.css';
 
 const LandingPage = () => {
-  return (
+  const navigate = useNavigate();
 
+  const handleGetStarted = () => {
+    navigate('/register');
+  };
+
+  return (
     <div className="lp-container">
       <header className="lp-header">
         <div className="lp-logo">FitTrack</div>
@@ -15,7 +21,9 @@ const LandingPage = () => {
       <section className="lp-hero">
         <h1>Transform Your Fitness with AI</h1>
         <p>Smart tracking, personalized insights, and real-time progress monitoring</p>
-        <button className="cta-button">Get Started for Free</button>
+        <button className="cta-button" onClick={handleGetStarted}>
+          Get Started for Free
+        </button>
       </section>
 
       <section className="features">

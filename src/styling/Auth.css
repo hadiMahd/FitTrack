@@ -84,13 +84,21 @@
   font-weight: 500;
 }
 
-.forgot-password{
-  display: block;
+.forgot-password-container {
   text-align: center;
   margin-top: 1rem;
-  color: rgb(94, 88, 213);
+}
+
+.forgot-password {
+  color: #5E58D5;
   text-decoration: none;
   font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+  color: #4A45C2;
 }
 
 @media (max-width: 480px) {
@@ -133,16 +141,4 @@
 .auth-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-}
-
-.forgot-password-container {
-  margin-top: 1.5rem;
-  text-align: center;
-}
-
-.forgot-password {
-  color: rgb(94, 88, 213);
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s;
 }

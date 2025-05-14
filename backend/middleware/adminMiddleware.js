@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import process from 'process';
 
 // Main authentication middleware
 export const authenticate = (req, res, next) => {

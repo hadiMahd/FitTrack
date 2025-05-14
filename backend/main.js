@@ -18,10 +18,11 @@ import modRouter from './routes/modRouter.js';
 import { query } from './config/db_conn.js'
 import userRouter from './routes/userRouter.js';
 import geminiRouter from './routes/geminiRouter.js';
+import process from 'process';
 
 const app = express()
 const port = 3000
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+app.listen(port, '0.0.0.0', () => console.log(`Example app listening on port ${port}!`))
 
 app.use(cors({
     origin: 'http://localhost:5173', // Replace with your frontend URL

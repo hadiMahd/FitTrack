@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from './User.js';
 import { config } from 'dotenv';
 config({ path: '../.env' });
+import process from 'process';
 
 // Rate limiting setup (in-memory store)
 const rateLimit = {};

@@ -10,6 +10,8 @@ import AdminPage from './pages/Admin';
 import ModeratorPage from './pages/Moderator';
 import EditWorkoutPlan from './components/EditWorkoutPlan';
 import DietPlans from './components/DietPlans';
+import ForgotPassword from './components/ForgotPass';
+import SendMessage from './components/SendMessage';
 
 const App = () => {
   return (
@@ -25,6 +27,8 @@ const App = () => {
         <Route path="/mod/dashboard" element={<ModeratorPage />} />
         <Route path="/admin/workout-plans/:id/edit" element={<EditWorkoutPlan />} />
         <Route path='/diet-plans' element={<DietPlans />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/contact-support" element={<SendMessage />} />
       </Routes>
       </div>
     </div>
